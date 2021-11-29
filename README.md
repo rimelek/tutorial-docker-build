@@ -187,6 +187,27 @@ created by the build processes without assigning a name to them.
 The last layer got an name but it is not required, however we usually
 use `-t imagename` to set a name.
 
+If you want to find an image what other images was built on, you can use
+`docker image history`:
+
+```bash
+docker image history localhost/buildtest:v3
+```
+
+The output:
+
+```text
+IMAGE          CREATED          CREATED BY                                      SIZE      COMMENT
+8f1aad1750cd  3 minutes ago   /bin/sh -c #(nop)  CMD ["env"]                  0B        
+454de17b2b2e   3 minutes ago   |1 app_dir=/app dir /bin/sh -c echo "version…   12B       
+a66c12b47355   3 minutes ago   |1 app_dir=/app dir /bin/sh -c mkdir "$app_d…   0B        
+4e1f6025a35c   3 minutes ago   /bin/sh -c #(nop)  ENV version=1.0 config_na…   0B        
+e5cc8f6ebbb3   3 minutes ago   /bin/sh -c #(nop)  ARG app_dir=/app dir         0B        
+ba6acccedd29   6 weeks ago      /bin/sh -c #(nop)  CMD ["bash"]                 0B        
+<missing>      6 weeks ago      /bin/sh -c #(nop) ADD file:5d68d27cc15a80653…   72.8MB
+```
+
+
 You can check that these images contain some metadata of the container
 from which it was created.
 
@@ -200,7 +221,7 @@ This shows you the command of that container like:
 [/bin/sh -c #(nop)  CMD ["env"]]
 ```
 
-This can be familiar from the output of the last container list.
+This can be familiar from the output of the `docker image history`.
 
 ## Create your own builder
 
@@ -254,9 +275,60 @@ if [[ -n "$target_image_name" ]]; then
 fi
 ```
 
+Run the script and set the image name to `localhost/buildtest:v4`
+
+```bash
+./build.sh localhost/buildtest:v4
+```
+
+The output is something like this
+
+```text
+Step 1 : FROM ubuntu:20.04
+ ---> ba6acccedd29
+Step 2 : ARG app_dir=/app
+ ---> Running in 133812f57bc1
+ ---> 2f9cb987c067
+Step 3 : ENV version=1.0 config_name=config.ini
+ ---> Running in ed436991f98e
+ ---> 99c07cd3dcf1
+Step 4 : RUN /bin/sh -c export app_dir=/app && mkdir $app_dir
+ ---> Running in c6d85646ab03
+ ---> 0e64b8abece3
+Step 5 : RUN /bin/sh -c export app_dir=/app && echo "version=$version" > "$app_dir/$config_name"
+ ---> Running in 8b0246f8c190
+ ---> 056213ce7313
+Step 6 : RUN /bin/sh -c apt-get update && apt-get install nano
+ ---> Running in 43049a418662
+Get:1 http://archive.ubuntu.com/ubuntu focal InRelease [265 kB]
+... (truncated to have a shorter output in the README) 
+ ---> 65f8c63875c0
+Step 7 : CMD ["env"]
+ ---> Running in c54a622e46ae
+ ---> f1a726e108d1
+Successfully built f1a726e108d1
+Successfully tagged localhost/buildtest:v4
+```
+
+Is it familiar? It should be.
+
 One noticeable difference is that the original `docker build` shows you 
 how many steps are in the build and which steps it is running at the moment.
 This small bash script only shows the number of the current step. Not a big deal.
+
+Now the image history will be a little different but the final image will be the same:
+
+```text
+IMAGE          CREATED       CREATED BY                                      SIZE      COMMENT
+f1a726e108d1   5 hours ago   /bin/sh -c #(nop) CMD ["env"]                   0B        
+65f8c63875c0   5 hours ago   /bin/sh -c apt-get update && apt-get install…   32.9MB    
+056213ce7313   5 hours ago   /bin/sh -c export app_dir=/app && echo "vers…   12B       
+0e64b8abece3   5 hours ago   /bin/sh -c export app_dir=/app && mkdir $app…   0B        
+99c07cd3dcf1   5 hours ago   /bin/sh -c #(nop) ARG version=1.0 config_nam…   0B        
+2f9cb987c067   5 hours ago   /bin/sh -c #(nop) ARG app_dir=/app              0B        
+ba6acccedd29   6 weeks ago   /bin/sh -c #(nop)  CMD ["bash"]                 0B        
+<missing>      6 weeks ago   /bin/sh -c #(nop) ADD file:5d68d27cc15a80653…   72.8MB
+```
 
 That's it for now. Make sure you understand how Docker build works
 so you will be able to optimize your build and use it the way nobody else could.
