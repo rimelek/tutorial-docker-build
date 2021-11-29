@@ -202,7 +202,7 @@ This shows you the command of that container like:
 
 This can be familiar from the output of the last container list.
 
-## Create an own builder
+## Create your own builder
 
 The question arises, can we build an image without Dockerfile
 knowing what we finally know about the build process? The answer is yes,
