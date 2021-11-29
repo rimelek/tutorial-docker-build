@@ -254,7 +254,7 @@ if [[ -n "$target_image_name" ]]; then
 fi
 ```
 
-One noticable difference is that the original `docker build` shows you 
+One noticeable difference is that the original `docker build` shows you 
 how many steps are in the build and which steps it is running at the moment.
 This small bash script only shows the number of the current step. Not a big deal.
 
