@@ -2,8 +2,8 @@
 
 You could ask: why would I build an image without Dockerfile?
 Well, usually I wouldn't, but it can help us to understand
-how docker build works so debugging can become easier 
-we can write better Dockerfile rules.
+how docker build works so debugging can be easier and
+we our Dockerfile can become better.
 
 In the following examples I use bash on Linux.
 If you use Docker Desktop, you need to change some commands
@@ -19,14 +19,14 @@ RUN mkdir /app
 RUN echo "version=1.0" > /app/config.ini
 ```
 
-The above Dockerfile contains only two `RUN` directives after the required `FROM`.
+The above Dockerfile contains only two `RUN` instruction after the required `FROM`.
 It can remind you to the `docker run` command and this is exactly what happens here.
-Each `RUN` directive means Docker will start a new temporary container and execute
+Each `RUN` instruction means Docker will start a new temporary container and execute
 the command inside it. When it finished executing the command it saves the container
-as an image. The next directive will use the previously built image as its base image
+as an image. The next instriction will use the previously built image as its base image
 and builds a new image.
 
-The reason you usually don't see it is the fact Docker deletes the containers
+The reason you usually don't see it is the fact that Docker deletes the containers
 unless you tell it not to do that. Passing `--rm=false` to `docker build`
 tells Docker it should keep the build containers. But... what if you have already built
 the image earlier or at least some of the layers? In that case those layers will not
@@ -34,7 +34,7 @@ be created again so there will be no new containers for them unless you also use
 `--no-cache` flag.
 
 Lets open a terminal and run [./list-containers.sh](./list-containers.sh) from the project root.
-It will continuously watch the availabl containers. Keep that terminal open and open a second terminal window in which you can run the build commands and see what happens.
+It will continuously watch the available containers. Keep that terminal open and open a second terminal window in which you can run the build commands and see what happens.
 
 Run the following command in the new terminal from the project root:
 
@@ -58,11 +58,11 @@ f1c09b6ace9f   exited    "/bin/sh -c 'echo \"version=1.0\" > /app/config.ini'"
 9a574344ad15   exited    "/bin/sh -c 'mkdir /app'"
 ```
 
-You can see each command in the command colum passed to `/bin/sh` as an argument.
+You can see each command in the command column passed to `/bin/sh` as an argument.
 This happens because I used the "shell form" to define the commands.
 It is what makes the output redirection possible. 
 
-# RUN directives without the shell form
+# Use "RUN" instructions without the shell form
 
 The previous Dockerfile could be a little different: Let's call it **Dockerfile.v2**.
 
@@ -73,7 +73,7 @@ RUN [ "touch", "/app/config.ini" ]
 RUN [ "sed", "-i", "$ aversion=1.0", "/app/config.ini" ]
 ```
 
-Without starting a shell, it takes three RUN directives to achieve the same.
+Without starting a shell, it takes three RUN instructions to achieve the same.
 It's time to build the image:
 
 ```bash
@@ -98,10 +98,10 @@ f1c09b6ace9f   exited    "/bin/sh -c 'echo \"version=1.0\" > /app/config.ini'"
 
 You can see the missing shell, right?
 
-## Other directives also create containers
+## Other instructions also create containers
 
 Now let's complicate things a little.
-The following Dockerfile called **Dockerfile.v3** uses more directives:
+The following Dockerfile called **Dockerfile.v3** uses more instructions:
 
 ```
 FROM ubuntu:20.04
@@ -118,12 +118,12 @@ CMD ["env"]
 
 We have different kind of variables like environment variables (`ENV`) and
 build arguments (`ARG`). At the end of the file we also have `CMD`
-to specifiy the command that should run when the container starts.
-IN this example I used `env` so I can list the environment variables in the container
+to specify the command that should run when the container starts.
+In this example I used `env` so I can list the environment variables in the container
 by default.
 
-`RUN` is not the only directive which creates a container. Although this is
-the one which also start the container to execute the commands. So why do we need
+`RUN` is not the only instruction which creates a container. Although this is
+the one which also starts the container to execute the commands. So why do we need
 more containers? To understand that let's build the image:
 
 ```bash
@@ -151,12 +151,12 @@ f1c09b6ace9f   exited    "/bin/sh -c 'echo \"version=1.0\" > /app/config.ini'"
 9a574344ad15   exited    "/bin/sh -c 'mkdir /app'"
 ```
 
-Wait... there some strange commands in the output. 
-As I wrote before, only the `RUN` directive start a new container,
-however, each directive (except `FROM`) creates a container which can be useful for caching
+Wait... there is some strange commands in the output. 
+As I wrote before, only the `RUN` instruction starts a new container,
+however, each instruction (except `FROM`) creates a container which can be useful for caching
 but these containers does not need to run. In these containers the command
 is actually a comment (`#(nop)`) which gets the metadata definition as an argument. 
-Obviosuly it wouldn'n make sense to run them. If you are wondering what `nop` means it is "no operation".
+Obviosuly it wouldn't make sense to run them. If you are wondering what `nop` means it is "no operation".
 
 Alright, we have containers but we also know that each container must have an image
 from which it was created. You can see those images by running the following command:
@@ -165,7 +165,7 @@ from which it was created. You can see those images by running the following com
 docker image ls --all
 ```
 
-The outpus is the following in my case:
+The output is the following in my case:
 
 ```text
 REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
@@ -184,7 +184,7 @@ ubuntu                20.04     ba6acccedd29   6 weeks ago      72.8MB
 
 Each line where "REPOSITORY" and "TAG" are `<none>` shows an image
 created by the build processes without assigning a name to them.
-The last layer got an name but it is not required, however we usually
+The last layer got a name but it is not required, however, we usually
 use `-t imagename` to set a name.
 
 If you want to find an image what other images was built on, you can use
@@ -230,15 +230,15 @@ knowing what we finally know about the build process? The answer is yes,
 however, I wouldn't recommend to use that in production. Let's do it anyway.
 
 You can find [./build.sh](build.sh) in the project root which takes one
-optinal argument, the image name.
+optional argument, the image name.
 
 It contains a function called `build_layer` which takes the following arguments:
 
 - The source image
-- The directive known from the Dockerfile
-- The arguments of the directive.
+- The instruction known from the Dockerfile
+- The arguments of the instruction.
 
-I haven't impelemented all the directives only some for the demonstration.
+I haven't impelemented all the instructions, only some for the demonstration.
 These are:
 
 - FROM
@@ -247,7 +247,7 @@ These are:
 - ENV
 - RUN
 
-You can implement more if you want to practice. Eben `COPY` can be implemented easily
+You can implement more if you want to practice. Even `COPY` can be implemented easily
 since we have `docker cp` to copy a file into a container even if that container is
 not running since everything is actually on the host somewhere and Docker knows where.
 
@@ -313,7 +313,7 @@ Successfully tagged localhost/buildtest:v4
 Is it familiar? It should be.
 
 One noticeable difference is that the original `docker build` shows you 
-how many steps are in the build and which steps it is running at the moment.
+how many steps are in the build and which step it is running at the moment.
 This small bash script only shows the number of the current step. Not a big deal.
 
 Now the image history will be a little different but the final image will be the same:

@@ -4,7 +4,7 @@ set -eu -o pipefail
 
 function build_layer() {
   local image="$1"
-  local directive="$2"
+  local instruction="$2"
   shift 2
 
   local args=("$@")
@@ -15,31 +15,31 @@ function build_layer() {
   local change=()
 
   ((++step))
-  echo "Step $step : $directive ${args[@]}"
+  echo "Step $step : $instruction ${args[@]}"
 
-  case "$directive" in
+  case "$instruction" in
     FROM)
       image_id=$(docker image inspect "${args[0]}" --format '{{ .Id }}')
       ;;
     ARG)
-      container_id=$(docker container create "$image" /bin/sh -c '#(nop)' "$directive ${args[*]}")
+      container_id=$(docker container create "$image" /bin/sh -c '#(nop)' "$instruction ${args[*]}")
       ;;
     ENV)
       env=()
       for e in "${args[@]}"; do
         env+=(-e "$e");
       done
-      container_id=$(docker container create "${env[@]}" "$image" /bin/sh -c '#(nop)' "$directive ${args[*]}")
+      container_id=$(docker container create "${env[@]}" "$image" /bin/sh -c '#(nop)' "$instruction ${args[*]}")
       ;;
     CMD)
-      container_id=$(docker container create "$image" /bin/sh -c '#(nop)' "$directive ${args[*]}")
-      change=(-c "$directive ${args[*]}")
+      container_id=$(docker container create "$image" /bin/sh -c '#(nop)' "$instruction ${args[*]}")
+      change=(-c "$instruction ${args[*]}")
       ;;
     RUN)
       container_id=$(docker container create "$image" "${args[@]}")
       ;;
     *)
-      >&2 echo "Invalid directive: $directive"
+      >&2 echo "Invalid instruction: $instruction"
       return 1
       ;;
   esac
@@ -48,7 +48,7 @@ function build_layer() {
     printf " ---> Running in %.12s\n" "$container_id"
   fi
   
-  if [[ "$directive" == "RUN" ]]; then
+  if [[ "$instruction" == "RUN" ]]; then
     docker container start -a "$container_id"
   fi
 
