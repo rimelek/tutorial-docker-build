@@ -3,7 +3,7 @@
 You could ask: why would I build an image without Dockerfile?
 Well, usually I wouldn't, but it can help us to understand
 how docker build works so debugging can be easier and
-we our Dockerfile can become better.
+our Dockerfile can become better.
 
 In the following examples I use bash on Linux.
 If you use Docker Desktop, you need to change some commands
