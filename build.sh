@@ -73,6 +73,6 @@ build_layer "$image_id" CMD '["env"]'
 printf 'Successfully built %.12s\n' $(echo $image_id | cut -d: -f2)
 
 if [[ -n "$target_image_name" ]]; then
-  docker tag "$image_id" "$target_image_name"
+  docker image tag "$image_id" "$target_image_name"
   echo "Successfully tagged $target_image_name"
 fi
