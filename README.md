@@ -1,6 +1,14 @@
 # Build a Docker image without Dockerfile
 
-You could ask: why would I build an image without Dockerfile?
+A Dockerfile is basically a text file which contains a series of instructions
+describing how we want to create the filesystem of the image and its metadata
+like labels and the command we want to execute when we start the container.
+
+This is the standard way when we use Docker so we can share our Dockerfile
+with its commonly known syntax and versioning of the text file is not a problem
+either.
+
+Now you could ask: why would I build an image without Dockerfile?
 Well, usually I wouldn't, but it can help us to understand
 how docker build works so debugging can be easier and
 our Dockerfile can become better.
