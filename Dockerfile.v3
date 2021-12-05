@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ARG app_dir="/app dir"
+ARG app_dir="/app"
 
 ENV version="1.0" \
     config_name=config.ini
