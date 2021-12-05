@@ -70,7 +70,7 @@ You can see each command in the command column passed to `/bin/sh` as an argumen
 This happens because I used the "shell form" to define the commands.
 It is what makes the output redirection possible. 
 
-# Use "RUN" instructions without the shell form
+# Use "RUN" instructions with the exec form
 
 The previous Dockerfile could be a little different: Let's call it **Dockerfile.v2**.
 
