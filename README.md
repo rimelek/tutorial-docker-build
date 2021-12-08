@@ -205,14 +205,14 @@ docker image history localhost/buildtest:v3
 The output:
 
 ```text
-IMAGE          CREATED          CREATED BY                                      SIZE      COMMENT
-8f1aad1750cd  3 minutes ago   /bin/sh -c #(nop)  CMD ["env"]                  0B        
+IMAGE          CREATED         CREATED BY                                      SIZE      COMMENT
+8f1aad1750cd   3 minutes ago   /bin/sh -c #(nop)  CMD ["env"]                  0B        
 454de17b2b2e   3 minutes ago   |1 app_dir=/app dir /bin/sh -c echo "version…   12B       
 a66c12b47355   3 minutes ago   |1 app_dir=/app dir /bin/sh -c mkdir "$app_d…   0B        
 4e1f6025a35c   3 minutes ago   /bin/sh -c #(nop)  ENV version=1.0 config_na…   0B        
 e5cc8f6ebbb3   3 minutes ago   /bin/sh -c #(nop)  ARG app_dir=/app dir         0B        
-ba6acccedd29   6 weeks ago      /bin/sh -c #(nop)  CMD ["bash"]                 0B        
-<missing>      6 weeks ago      /bin/sh -c #(nop) ADD file:5d68d27cc15a80653…   72.8MB
+ba6acccedd29   6 weeks ago     /bin/sh -c #(nop)  CMD ["bash"]                 0B        
+<missing>      6 weeks ago     /bin/sh -c #(nop) ADD file:5d68d27cc15a80653…   72.8MB
 ```
 
 
