@@ -338,6 +338,396 @@ ba6acccedd29   6 weeks ago   /bin/sh -c #(nop)  CMD ["bash"]                 0B
 <missing>      6 weeks ago   /bin/sh -c #(nop) ADD file:5d68d27cc15a80653…   72.8MB
 ```
 
+## Build without base image
+
+So far, we have used an Ubuntu base image for each build,
+so someone actually had to build an image before we could build ours.
+But how was that image built?
+
+We can use `FROM scratch` at the beginning of our Dockerfile,
+which doesn't do anything at all. You can't build an image with only this line
+in the Dockerfile. You have to have at least some metadata or
+copy files into the image.
+
+To see what it creates after the build we will start a new, empty environment.
+You can do it in a virtual machine or use [Docker in Docker](https://hub.docker.com/_/docker).
+I will just replace my old docker data folder with an empty one.
+
+> **DO NOT** touch this folder on a system where you have actually used Docker containers
+> unless you know exactly what you are doing.
+
+```bash
+sudo systemctl stop docker.socket
+sudo systemctl stop docker.service
+sudo mv /var/lib/docker /var/lib/docker-original
+sudo mkdir /var/lib/docker
+sudo systemctl start docker
+```
+
+Let's see the files in this new folder after starting the Docker daemon.
+
+```bash
+sudo find /var/lib/docker -type f -printf '%P\n'
+```
+
+```text
+volumes/metadata.db
+image/overlay2/repositories.json
+network/files/local-kv.db
+buildkit/snapshots.db
+buildkit/containerdmeta.db
+buildkit/cache.db
+buildkit/metadata_v2.db
+```
+
+We have database files and one json to store information about our image tags.
+
+```bash
+sudo cat /var/lib/docker/image/overlay2/repositories.json | jq .
+```
+
+```json
+{
+  "Repositories": {}
+}
+```
+
+It's time to build our first image from scratch.
+
+```bash
+DOCKER_BUILDKIT=0 \
+  docker image build . \
+    -t localhost/buildtest:v5 \
+    -f Dockerfile.v5 \
+     --rm=false \
+     --no-cache
+```
+
+Even when you build an image from scrach without any executable on its filesystem,
+Docker will create a container. Of course it couldn't run it even if it wanted to
+due to the missing shell:
+
+```bash
+CONTAINER ID   STATE     COMMAND
+ccf2c0a1c387   created   "/bin/sh -c '#(nop) ' 'LABEL maintainer=itsziget'"
+```
+
+Check the newly created files
+
+```bash
+sudo find /var/lib/docker -type f -printf '%P\n'
+```
+
+```text
+volumes/metadata.db
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/link
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/committed
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/dev/console
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/etc/resolv.conf
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/etc/hostname
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/etc/hosts
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/.dockerenv
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4/link
+overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4/lower
+containers/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/config.v2.json
+containers/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/hostconfig.json
+image/overlay2/layerdb/mounts/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/init-id
+image/overlay2/layerdb/mounts/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/mount-id
+image/overlay2/repositories.json
+image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
+image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
+network/files/local-kv.db
+buildkit/snapshots.db
+buildkit/containerdmeta.db
+buildkit/cache.db
+buildkit/metadata_v2.db
+```
+
+Now we have new folders and new files, but let's delete the container to see what we have without it.
+
+```text
+volumes/metadata.db
+image/overlay2/repositories.json
+image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
+image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
+network/files/local-kv.db
+buildkit/snapshots.db
+buildkit/containerdmeta.db
+buildkit/cache.db
+buildkit/metadata_v2.db
+```
+
+Let's check the content of the `repositories.json`.
+
+```bash
+sudo cat /var/lib/docker/image/overlay2/repositories.json | jq .
+```
+
+```json
+{
+  "Repositories": {
+    "localhost/buildtest": {
+      "localhost/buildtest:v5": "sha256:18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00"
+    }
+  }
+}
+```
+
+This is a very simple json containing the image tags and their IDs. 
+If you need proof, run run the following command:
+
+```bash
+docker image ls --no-trunc --format '{{.ID}}'
+```
+
+Using this ID you can get the metadata of this image:
+
+```bash
+sudo cat /var/lib/docker/image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00 | jq .
+```
+
+```json
+{
+  "architecture": "amd64",
+  "config": {
+    "Hostname": "",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": null,
+    "Image": "",
+    "Volumes": null,
+    "WorkingDir": "",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "maintainer": "itsziget"
+    }
+  },
+  "container": "ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763",
+  "container_config": {
+    "Hostname": "ccf2c0a1c387",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/bin/sh",
+      "-c",
+      "#(nop) ",
+      "LABEL maintainer=itsziget"
+    ],
+    "Image": "",
+    "Volumes": null,
+    "WorkingDir": "",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "maintainer": "itsziget"
+    }
+  },
+  "created": "2021-12-19T19:39:16.963499812Z",
+  "docker_version": "20.10.12",
+  "history": [
+    {
+      "created": "2021-12-19T19:39:16.963499812Z",
+      "created_by": "/bin/sh -c #(nop)  LABEL maintainer=itsziget",
+      "empty_layer": true
+    }
+  ],
+  "os": "linux",
+  "rootfs": {
+    "type": "layers"
+  }
+}
+```
+
+This is similar to what you can see using `docker image inspect`
+
+```bash
+docker image inspect localhost/buildtest:v5 --format '{{ json . }}' | jq .
+```
+
+```json
+{
+  "Id": "sha256:18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00",
+  "RepoTags": [
+    "localhost/buildtest:v5"
+  ],
+  "RepoDigests": [],
+  "Parent": "",
+  "Comment": "",
+  "Created": "2021-12-19T19:39:16.963499812Z",
+  "Container": "ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763",
+  "ContainerConfig": {
+    "Hostname": "ccf2c0a1c387",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/bin/sh",
+      "-c",
+      "#(nop) ",
+      "LABEL maintainer=itsziget"
+    ],
+    "Image": "",
+    "Volumes": null,
+    "WorkingDir": "",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "maintainer": "itsziget"
+    }
+  },
+  "DockerVersion": "20.10.12",
+  "Author": "",
+  "Config": {
+    "Hostname": "",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": null,
+    "Image": "",
+    "Volumes": null,
+    "WorkingDir": "",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "maintainer": "itsziget"
+    }
+  },
+  "Architecture": "amd64",
+  "Os": "linux",
+  "Size": 0,
+  "VirtualSize": 0,
+  "GraphDriver": {
+    "Data": null,
+    "Name": "overlay2"
+  },
+  "RootFS": {
+    "Type": "layers"
+  },
+  "Metadata": {
+    "LastTagTime": "2021-12-19T20:39:17.006927699+01:00"
+  }
+}
+```
+
+Compared to the previous outputs the file called "lastUpdated" is not so interesting.
+
+```bash
+sudo cat /var/lib/docker/image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
+```
+
+```text
+2021-12-19T20:39:17.006927699+01:00
+```
+
+If you are wondering where that long ID comes from, check this out:
+
+```bash
+sudo cat /var/lib/docker/image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00 | sha256sum | cut -d " " -f1
+```
+
+```text
+18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
+```
+
+The ID is generated from the json file which contains everything about the image, even its build history.
+Now you have the power to create your own image from scratch without a filesystem.
+This is not really useful, is it?
+
+Let's buuld our first go app which we can use in container. I installed go as a snap package:
+
+```bash
+sudo snap install go --channel 1.17/stable --classic
+```
+
+Build `hello.go`
+
+```bash
+go build -o hello hello.go
+```
+
+Now I can use the empty image to create a container and run the hello app
+in that container.
+
+```bash
+docker run -it -v $PWD/hello:/hello localhost/buildtest:v5 /hello
+```
+
+```text
+Hello Go!
+```
+
+This simple container creates some new files:
+
+```bash
+sudo find /var/lib/docker -type f -printf '%P\n'
+```
+
+```text
+volumes/metadata.db
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/link
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/committed
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/dev/console
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/etc/resolv.conf
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/etc/hostname
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/etc/hosts
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/.dockerenv
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115/link
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115/lower
+overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115/diff/hello
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/resolv.conf
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/hostname
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c-json.log
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/config.v2.json
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/resolv.conf.hash
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/hostconfig.json
+containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/hosts
+image/overlay2/layerdb/mounts/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/init-id
+image/overlay2/layerdb/mounts/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/mount-id
+image/overlay2/repositories.json
+image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
+image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
+network/files/local-kv.db
+buildkit/snapshots.db
+buildkit/containerdmeta.db
+buildkit/cache.db
+buildkit/metadata_v2.db
+```
+
 That's it for now. Make sure you understand how Docker build works
 so you will be able to optimize your build and use it the way nobody else could.
 
