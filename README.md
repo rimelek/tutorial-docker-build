@@ -684,48 +684,46 @@ Now I can use the empty image to create a container and run the hello app
 in that container.
 
 ```bash
-docker run -it -v $PWD/hello:/hello localhost/buildtest:v5 /hello
+docker run -it --rm -v $PWD/hello:/hello localhost/buildtest:v5 /hello
 ```
 
 ```text
 Hello Go!
 ```
 
-This simple container creates some new files:
+Now we are ready to create our first image from scratch without
+Dockerfile and the `docker run` command.
+
+The [meta.json](scratch-assets/meta.json) will contain the metadata we saw earlier.
+The `lastupdated` file will be created dynamically. Yes, we can do it! We are good!
+And finally, `build-from-scratch.sh` will do build.
+
+Run the following command:
 
 ```bash
-sudo find /var/lib/docker -type f -printf '%P\n'
+sudo ./build-from-scratch.sh
 ```
 
+There is one downside of this solution. We have to restart the Docker daemon,
+so it can reload the configuration. If you build a new image before you restart
+the docker daemon, Docker will overwrite the `repositories.json` without
+the tag which was added to the file by the script.
+
+If you don't want your already running containers to stop, you have to enable
+[live-restore](https://docs.docker.com/config/containers/live-restore/)
+
+**Note:** Apparently, if you use the `--rm` option with `docker run`, Docker will
+remove the container even if you configure live restore.
+
+```bash
+systemctl restart docker
+```
+
+Now the magick is done, we have the new image:
+
 ```text
-volumes/metadata.db
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/link
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/committed
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/dev/console
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/etc/resolv.conf
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/etc/hostname
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/etc/hosts
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115-init/diff/.dockerenv
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115/link
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115/lower
-overlay2/85f8c58d8c58005ecbf18f9685aef7fbe6d2d5385bd48c452f42e0adaea89115/diff/hello
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/resolv.conf
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/hostname
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c-json.log
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/config.v2.json
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/resolv.conf.hash
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/hostconfig.json
-containers/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/hosts
-image/overlay2/layerdb/mounts/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/init-id
-image/overlay2/layerdb/mounts/872988544b6eea2818a5d8d639609dd68889bded9ce7e64a8683d8e98223149c/mount-id
-image/overlay2/repositories.json
-image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
-image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
-network/files/local-kv.db
-buildkit/snapshots.db
-buildkit/containerdmeta.db
-buildkit/cache.db
-buildkit/metadata_v2.db
+REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
+localhost/buildtest   v7        7b46d4496bd9   27 hours ago     0B
 ```
 
 That's it for now. Make sure you understand how Docker build works

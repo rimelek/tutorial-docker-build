@@ -1,0 +1,43 @@
+{
+  "architecture": "amd64",
+  "config": {
+    "Hostname": "",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/hello"
+    ],
+    "Image": "",
+    "Volumes": null,
+    "WorkingDir": "",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "maintainer": "I.T. Sziget"
+    }
+  },
+  "container": "",
+  "container_config": {},
+  "created": "2021-12-19T19:39:16.000000000Z",
+  "docker_version": "20.10.13",
+  "history": [
+    {
+      "created": "2021-12-19T19:39:16.000000000Z",
+      "created_by": "/bin/sh -c #(nop)  LABEL maintainer=I.T. Sziget",
+      "empty_layer": true
+    }
+  ],
+  "os": "linux",
+  "rootfs": {
+    "type": "layers"
+  }
+}
