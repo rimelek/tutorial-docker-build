@@ -25,7 +25,7 @@ if [[ "$confirm" == "y" ]]; then
   echo "Archiving \"$dir_current\" ..."
   dir_archived="$(dir_archived)"
   sudo systemctl stop docker.service docker.socket
-  sudo mv "$dir_current" "$dir_archived"
+  sudo cp -ax "$dir_current" "$dir_archived"
   sudo systemctl start docker.service docker.socket
   echo "Docker data archived to \"$dir_archived\""
 else
