@@ -668,7 +668,7 @@ The ID is generated from the json file which contains everything about the image
 Now you have the power to create your own image from scratch without a filesystem.
 This is not really useful, is it?
 
-Let's buuld our first go app which we can use in container. I installed go as a snap package:
+Let's build our first go app which we can use in container. I installed go as a snap package:
 
 ```bash
 sudo snap install go --channel 1.17/stable --classic
