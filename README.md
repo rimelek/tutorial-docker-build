@@ -473,8 +473,8 @@ sudo cat /var/lib/docker/image/overlay2/repositories.json | jq .
 }
 ```
 
-This is a very simple json containing the image tags and their IDs. 
-If you need proof, run run the following command:
+This is a very simple json containing the image tags and their IDs.
+If you need proof, run sthe following command:
 
 ```bash
 docker image ls --no-trunc --format '{{.ID}}'
@@ -725,6 +725,25 @@ Now the magick is done, we have the new image:
 REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
 localhost/buildtest   v7        7b46d4496bd9   27 hours ago     0B
 ```
+
+Build image with a minimal filesystem:
+
+```bash
+DOCKER_BUILDKIT=0 \
+  docker image build . \
+    -t localhost/buildtest:v8 \
+    -f Dockerfile.v8 \
+     --rm=false \
+     --no-cache
+```
+
+- Find the layer
+- Find the tar-split json
+- docker save v8
+- extract
+- sha256sum on layer.tar
+- Compare hash
+
 
 That's it for now. Make sure you understand how Docker build works
 so you will be able to optimize your build and use it the way nobody else could.
