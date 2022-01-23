@@ -2,7 +2,11 @@
 
 set -eu -o pipefail
 
-dir=/var/lib/docker
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+source "$script_dir/env.sh"
+[[ -f "$script_dir/env.custom.sh" ]] && source "$script_dir/env.custom.sh"
+
+dir="$PROJECT_DOCKER_DATA_DIR"
 
 echo -n "Are you sure you want to destroy \"$dir\"? [y/N] "
 read confirm
