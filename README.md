@@ -41,21 +41,16 @@ the image earlier or at least some of the layers? In that case those layers will
 be created again so there will be no new containers for them unless you also use the 
 `--no-cache` flag.
 
-Lets open a terminal and run [./list-containers.sh](./list-containers.sh) from the project root.
+Lets open a terminal and run [./scripts/docker-watch-containers.sh](./scripts/docker-watch-containers.sh) from the project root.
 It will continuously watch the available containers. Keep that terminal open and open a second terminal window in which you can run the build commands and see what happens.
 
 Run the following command in the new terminal from the project root:
 
 ```bash
-DOCKER_BUILDKIT=0 \
-  docker image build . \
-    -t localhost/buildtest:v1 \
-    -f Dockerfile.v1 \
-     --rm=false \
-     --no-cache
+./scripts/docker-build-learn.sh v1
 ```
 
-Note that I disabled buildkit since it is enabled on some systems and it changes
+If you look into [docker-build-learn.sh](scripts/docker-build-learn.sh), you can see that I disabled buildkit since it is enabled on some systems and it changes
 how images are built. If you don't have buildkit enabled, the first line is optional.
 
 The output in the "watch" window is something like this:
@@ -85,12 +80,7 @@ Without starting a shell, it takes three RUN instructions to achieve the same.
 It's time to build the image:
 
 ```bash
-DOCKER_BUILDKIT=0 \
-  docker image build . \
-    -t localhost/buildtest:v2 \
-    -f Dockerfile.v2 \
-     --rm=false \
-     --no-cache
+./scripts/docker-build-learn.sh v2
 ```
 
 The output in the "watch" window is the following:
@@ -135,12 +125,7 @@ the one which also starts the container to execute the commands. So why do we ne
 more containers? To understand that let's build the image:
 
 ```bash
-DOCKER_BUILDKIT=0 \
-  docker image build . \
-    -t localhost/buildtest:v3 \
-    -f Dockerfile.v3 \
-     --rm=false \
-     --no-cache
+./scripts/docker-build-learn.sh v3
 ```
 
 Now we have five more containers in the other window.
@@ -164,9 +149,9 @@ As I wrote before, only the `RUN` instruction starts a new container,
 however, each instruction (except `FROM`) creates a container which can be useful for caching
 but these containers does not need to run. In these containers the command
 is actually a comment (`#(nop)`) which gets the metadata definition as an argument. 
-Obviosuly it wouldn't make sense to run them. If you are wondering what `nop` means it is "no operation".
+Obviously it wouldn't make sense to run them. If you are wondering what `nop` means it is "no operation".
 
-Alright, we have containers but we also know that each container must have an image
+Alright, we have containers, but we also know that each container must have an image
 from which it was created. You can see those images by running the following command:
 
 ```bash
@@ -259,7 +244,7 @@ You can implement more if you want to practice. Even `COPY` can be implemented e
 since we have `docker cp` to copy a file into a container even if that container is
 not running since everything is actually on the host somewhere and Docker knows where.
 
-I will not write about each line but I highlight the main part of the script 
+I will not write about each line, but I highlight the main part of the script 
 to see how similar can the build be to `docker build`
 
 ```bash
@@ -356,18 +341,35 @@ I will just replace my old docker data folder with an empty one.
 > **DO NOT** touch this folder on a system where you have actually used Docker containers
 > unless you know exactly what you are doing.
 
+The following scripts are using [./scripts/env.sh](./scripts/env.sh) as a configuration file
+to set `PROJECT_DOCKER_DATA_DIR` (default value: `/var/lib/docker`) and
+`PROJECT_DOCKER_DATA_DIR_ARCHIVED_BASE` (default value: `"${PROJECT_DOCKER_DATA_DIR}.archived"`).
+You can change those settings by creating copying `./scripts/env.sh` as `./scripts/env.custom.sh`
+and changing the values. The scripts are using `systemctl` to stop and start the Docker daemon. 
+If you have a different environment like "Windows Subsystem for Linux", it will not work, but
+you can check the scripts to get an idea how you can do it.
+
+If you want to make a backup of your docker data directory, run the following script:
+
 ```bash
-sudo systemctl stop docker.socket
-sudo systemctl stop docker.service
-sudo mv /var/lib/docker /var/lib/docker-original
-sudo mkdir /var/lib/docker
-sudo systemctl start docker
+./scripts/docker-data-archive.sh
+```
+This is where `PROJECT_DOCKER_DATA_DIR_ARCHIVED_BASE` is important, because if you don't have
+enough space on the disk of the default location, you can change it to save your current data
+to another disk. Each backup directory will get a number as a suffix.
+
+Now we need to reset the docker data dir, so run the script below.
+Note that this script is called `docker-data-destroy.sh` because I wanted to make sure you understand
+that it will really destroy all of your data if you don't have a backup.
+
+```bash
+./scripts/docker-data-destroy.sh
 ```
 
 Let's see the files in this new folder after starting the Docker daemon.
 
 ```bash
-sudo find /var/lib/docker -type f -printf '%P\n'
+./scripts/docker-data-files.sh
 ```
 
 ```text
@@ -383,7 +385,7 @@ buildkit/metadata_v2.db
 We have database files and one json to store information about our image tags.
 
 ```bash
-sudo cat /var/lib/docker/image/overlay2/repositories.json | jq .
+./scripts/docker-data-repository.sh
 ```
 
 ```json
@@ -694,7 +696,7 @@ Hello Go!
 Now we are ready to create our first image from scratch without
 Dockerfile and the `docker run` command.
 
-The [meta.json](scratch-assets/meta.json) will contain the metadata we saw earlier.
+The [meta.json](meta.json) will contain the metadata we saw earlier.
 The `lastupdated` file will be created dynamically. Yes, we can do it! We are good!
 And finally, `build-from-scratch.sh` will do build.
 
