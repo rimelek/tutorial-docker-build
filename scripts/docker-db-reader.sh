@@ -9,6 +9,12 @@ source "$script_dir/env.sh"
 dir_target_base="$script_dir/../var/dockerdb-tmp"
 
 file_src=$1
+
+if [[ ! -f "$file_src" ]]; then
+  >&2 echo "File not found: $file_src"
+  exit 1
+fi
+
 file_src_abs_path="$(cd "$(dirname "$file_src")" && pwd)/$(basename "$file_src")"
 file_target_abs_path="${dir_target_base}${file_src_abs_path}"
 
