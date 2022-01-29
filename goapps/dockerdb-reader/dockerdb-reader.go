@@ -89,5 +89,5 @@ func main() {
 		}
 	}(db)
 
-	fmt.Printf("%s", getContentAsJson(db))
+	fmt.Printf("%s\n", getContentAsJson(db))
 }
