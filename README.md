@@ -41,13 +41,24 @@ the image earlier or at least some of the layers? In that case those layers will
 be created again so there will be no new containers for them unless you also use the 
 `--no-cache` flag.
 
-Lets open a terminal and run [./scripts/docker-watch-containers.sh](./scripts/docker-watch-containers.sh) from the project root.
+Let's open a terminal and run [./scripts/docker-watch-containers.sh](./scripts/docker-watch-containers.sh) from the project root.
 It will continuously watch the available containers. Keep that terminal open and open a second terminal window in which you can run the build commands and see what happens.
 
 Run the following command in the new terminal from the project root:
 
 ```bash
 ./scripts/docker-build-learn.sh v1
+```
+
+It actually executes the following code:
+
+```bash
+DOCKER_BUILDKIT=0 \
+  docker image build . \
+    -t localhost/buildtest:v1 \
+    -f Dockerfile.v1 \
+    --rm=false \
+    --no-cache
 ```
 
 If you look into [docker-build-learn.sh](scripts/docker-build-learn.sh), you can see that I disabled buildkit since it is enabled on some systems and it changes
@@ -231,7 +242,7 @@ It contains a function called `build_layer` which takes the following arguments:
 - The instruction known from the Dockerfile
 - The arguments of the instruction.
 
-I haven't impelemented all the instructions, only some for the demonstration.
+I haven't implemented all the instructions, only some for the demonstration.
 These are:
 
 - FROM
@@ -385,7 +396,7 @@ buildkit/metadata_v2.db
 We have database files and one json to store information about our image tags.
 
 ```bash
-./scripts/docker-data-repository.sh
+./scripts/docker-data-repositories.sh
 ```
 
 ```json
@@ -394,58 +405,19 @@ We have database files and one json to store information about our image tags.
 }
 ```
 
-It's time to build our first image from scratch.
+It's time to build our first image from scratch. In this case, we don't want to keep the build containers,
+so we will use [./scripts/docker-build.sh](./scripts/docker-build.sh) which runs `docker build` without 
+`--no-cache` and `--rm=false`.
 
 ```bash
-DOCKER_BUILDKIT=0 \
-  docker image build . \
-    -t localhost/buildtest:v5 \
-    -f Dockerfile.v5 \
-     --rm=false \
-     --no-cache
-```
-
-Even when you build an image from scrach without any executable on its filesystem,
-Docker will create a container. Of course it couldn't run it even if it wanted to
-due to the missing shell:
-
-```bash
-CONTAINER ID   STATE     COMMAND
-ccf2c0a1c387   created   "/bin/sh -c '#(nop) ' 'LABEL maintainer=itsziget'"
+./scripts/docker-build.sh v5
 ```
 
 Check the newly created files
 
 ```bash
-sudo find /var/lib/docker -type f -printf '%P\n'
+./scripts/docker-data-files.sh
 ```
-
-```text
-volumes/metadata.db
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/link
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/committed
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/dev/console
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/etc/resolv.conf
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/etc/hostname
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/etc/hosts
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4-init/diff/.dockerenv
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4/link
-overlay2/dfe1d48dd2fff085554252041d236728dd0e1e29260572b77e85685198be72a4/lower
-containers/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/config.v2.json
-containers/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/hostconfig.json
-image/overlay2/layerdb/mounts/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/init-id
-image/overlay2/layerdb/mounts/ccf2c0a1c387fd3ec67a5da061ddbb63a0c18aedfee9b7c35a86eda13d4bb763/mount-id
-image/overlay2/repositories.json
-image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
-image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
-network/files/local-kv.db
-buildkit/snapshots.db
-buildkit/containerdmeta.db
-buildkit/cache.db
-buildkit/metadata_v2.db
-```
-
-Now we have new folders and new files, but let's delete the container to see what we have without it.
 
 ```text
 volumes/metadata.db
@@ -459,10 +431,10 @@ buildkit/cache.db
 buildkit/metadata_v2.db
 ```
 
-Let's check the content of the `repositories.json`.
+Let's check the content of the `repositories.json` again.
 
 ```bash
-sudo cat /var/lib/docker/image/overlay2/repositories.json | jq .
+./scripts/docker-data-repositories.sh
 ```
 
 ```json
@@ -476,16 +448,16 @@ sudo cat /var/lib/docker/image/overlay2/repositories.json | jq .
 ```
 
 This is a very simple json containing the image tags and their IDs.
-If you need proof, run sthe following command:
+If you need proof, run the following command:
 
 ```bash
 docker image ls --no-trunc --format '{{.ID}}'
 ```
 
-Using this ID you can get the metadata of this image:
+Using this ID you can get the metadata of this image by reading the file we have just discovered in `image/overlay2/imagedb/content/sha256/`:
 
 ```bash
-sudo cat /var/lib/docker/image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00 | jq .
+./scripts/docker-data-cat.sh "image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00" | jq .
 ```
 
 ```json
@@ -649,8 +621,10 @@ docker image inspect localhost/buildtest:v5 --format '{{ json . }}' | jq .
 Compared to the previous outputs the file called "lastUpdated" is not so interesting.
 
 ```bash
-sudo cat /var/lib/docker/image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated
+./scripts/docker-data-cat.sh -l "image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated"
 ```
+
+Note that I used `-l` flag to make sure the output ends with a line break, since the file does not contain it.
 
 ```text
 2021-12-19T20:39:17.006927699+01:00
@@ -659,7 +633,7 @@ sudo cat /var/lib/docker/image/overlay2/imagedb/metadata/sha256/18391a6e324a1b80
 If you are wondering where that long ID comes from, check this out:
 
 ```bash
-sudo cat /var/lib/docker/image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00 | sha256sum | cut -d " " -f1
+./scripts/docker-data-cat.sh "image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00" | sha256sum | cut -d " " -f1
 ```
 
 ```text
@@ -670,7 +644,7 @@ The ID is generated from the json file which contains everything about the image
 Now you have the power to create your own image from scratch without a filesystem.
 This is not really useful, is it?
 
-Let's build our first go app which we can use in container. I installed go as a snap package:
+Let's build our first go app which we can use in a container. I installed go as a snap package:
 
 ```bash
 sudo snap install go --channel 1.17/stable --classic
@@ -679,14 +653,14 @@ sudo snap install go --channel 1.17/stable --classic
 Build `hello.go`
 
 ```bash
-go build -o hello hello.go
+./scripts/go-build-hello.sh
 ```
 
 Now I can use the empty image to create a container and run the hello app
 in that container.
 
 ```bash
-docker run -it --rm -v $PWD/hello:/hello localhost/buildtest:v5 /hello
+docker run -it --rm -v $PWD/var/bin/hello:/hello localhost/buildtest:v5 /hello
 ```
 
 ```text
@@ -697,8 +671,8 @@ Now we are ready to create our first image from scratch without
 Dockerfile and the `docker run` command.
 
 The [meta.json](meta.json) will contain the metadata we saw earlier.
-The `lastupdated` file will be created dynamically. Yes, we can do it! We are good!
-And finally, `build-from-scratch.sh` will do build.
+The `lastUpdated` file will be created dynamically. Yes, we can do it! We are good!
+And finally, `build-from-scratch.sh` will do the build.
 
 Run the following command:
 
@@ -712,7 +686,8 @@ the docker daemon, Docker will overwrite the `repositories.json` without
 the tag which was added to the file by the script.
 
 If you don't want your already running containers to stop, you have to enable
-[live-restore](https://docs.docker.com/config/containers/live-restore/)
+[live-restore](https://docs.docker.com/config/containers/live-restore/),
+which is unfortunately not compatible with Docker Swarm.
 
 **Note:** Apparently, if you use the `--rm` option with `docker run`, Docker will
 remove the container even if you configure live restore.
