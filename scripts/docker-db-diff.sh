@@ -12,7 +12,7 @@ while getopts ':q' opt; do
   case "$opt" in
     q) quiet=1 ;; # don't show the actual diff, only the filenames 
     *)
-      >&2 echo "Invalid flag: -$opt"
+      >&2 echo "Invalid flag: -$OPTARG"
       exit 1
       ;;
   esac
