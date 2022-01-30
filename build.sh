@@ -10,12 +10,11 @@ function build_layer() {
   local args=("$@")
 
   local env
-  local start=0
   local container_id=""
   local change=()
 
   ((++step))
-  echo "Step $step : $instruction ${args[@]}"
+  echo "Step $step : $instruction ${args[*]}"
 
   case "$instruction" in
     FROM)
@@ -58,7 +57,7 @@ function build_layer() {
   if [[ -n "$container_id" ]]; then
     image_id=$(docker container commit "${change[@]}" "$container_id")
   fi
-  printf ' ---> %.12s\n' "$(echo $image_id | cut -d: -f2)"
+  printf ' ---> %.12s\n' "$(echo "$image_id" | cut -d: -f2)"
 }
 
 target_image_name="${1:-}"
@@ -73,7 +72,7 @@ build_layer "$image_id" RUN /bin/sh -c 'export app_dir=/app && echo "version=$ve
 build_layer "$image_id" RUN /bin/sh -c 'apt-get update && apt-get install nano'
 build_layer "$image_id" CMD '["env"]'
 
-printf 'Successfully built %.12s\n' $(echo $image_id | cut -d: -f2)
+printf 'Successfully built %.12s\n' "$(echo "$image_id" | cut -d: -f2)"
 
 if [[ -n "$target_image_name" ]]; then
   docker image tag "$image_id" "$target_image_name"
