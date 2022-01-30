@@ -18,12 +18,12 @@ else
   version_1="0"
 fi
 
-dir_1="$dir_archived_base.$version_1/"
+dir_1="$dir_archived_base.$version_1"
 if [[ "$version_1" == "0" ]]; then
-  dir_1="$dir_current/"
+  dir_1="$dir_current"
 fi
 
-dir_2="$dir_archived_base.$version_2/"
+dir_2="$dir_archived_base.$version_2"
 
 function db_files_rel() {
   echo "volumes/metadata.db"
