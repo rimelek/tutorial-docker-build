@@ -17,22 +17,24 @@ In the following examples I use bash on Linux.
 If you use Docker Desktop, you need to change some commands
 like setting variables.
 
-## Understand a simple Dockerfile
+## Build with a base image
+
+### Understand a simple Dockerfile
 
 **Dockerfile.v1**
 
-```
+```Dockerfile
 FROM ubuntu:20.04
 RUN mkdir /app
 RUN echo "version=1.0" > /app/config.ini
 ```
 
-The above Dockerfile contains only two `RUN` instruction after the required `FROM`.
+The above Dockerfile contains only two `RUN` instructions after the required `FROM`.
 It can remind you to the `docker run` command and this is exactly what happens here.
 Each `RUN` instruction means Docker will start a new temporary container and execute
 the command inside it. When it finished executing the command it saves the container
-as an image. The next instriction will use the previously built image as its base image
-and builds a new image.
+as an image. The next instruction will use the previously built image as its base image
+and build a new image.
 
 The reason you usually don't see it is the fact that Docker deletes the containers
 unless you tell it not to do that. Passing `--rm=false` to `docker build`
@@ -76,11 +78,11 @@ You can see each command in the command column passed to `/bin/sh` as an argumen
 This happens because I used the "shell form" to define the commands.
 It is what makes the output redirection possible. 
 
-# Use "RUN" instructions with the exec form
+### Use "RUN" instructions with the exec form
 
 The previous Dockerfile could be a little different: Let's call it **Dockerfile.v2**.
 
-```
+```Dockerfile
 FROM ubuntu:20.04
 RUN [ "mkdir", "/app"]
 RUN [ "touch", "/app/config.ini" ]
@@ -107,12 +109,12 @@ f1c09b6ace9f   exited    "/bin/sh -c 'echo \"version=1.0\" > /app/config.ini'"
 
 You can see the missing shell, right?
 
-## Other instructions also create containers
+### Other instructions also create containers
 
 Now let's complicate things a little.
 The following Dockerfile called **Dockerfile.v3** uses more instructions:
 
-```
+```Dockerfile
 FROM ubuntu:20.04
 ARG app_dir=/app
 
@@ -227,7 +229,7 @@ This shows you the command of that container like:
 
 This can be familiar from the output of the `docker image history`.
 
-## Create your own builder
+### Create your own builder
 
 The question arises, can we build an image without Dockerfile
 knowing what we finally know about the build process? The answer is yes,
@@ -334,7 +336,9 @@ ba6acccedd29   6 weeks ago   /bin/sh -c #(nop)  CMD ["bash"]                 0B
 <missing>      6 weeks ago   /bin/sh -c #(nop) ADD file:5d68d27cc15a80653…   72.8MB
 ```
 
-## Build without base image
+## Build without a base image
+
+### Without filesystem
 
 So far, we have used an Ubuntu base image for each build,
 so someone actually had to build an image before we could build ours.
@@ -703,16 +707,13 @@ REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
 localhost/buildtest   v7        7b46d4496bd9   27 hours ago     0B
 ```
 
-Build image with a minimal filesystem:
+### With a minimal filesystem:
 
 ```bash
-DOCKER_BUILDKIT=0 \
-  docker image build . \
-    -t localhost/buildtest:v8 \
-    -f Dockerfile.v8 \
-     --rm=false \
-     --no-cache
+./scripts/docker-build.sh v8
 ```
+
+TODO: 
 
 - Find the layer
 - Find the tar-split json
