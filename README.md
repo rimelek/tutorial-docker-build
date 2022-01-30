@@ -233,9 +233,9 @@ This can be familiar from the output of the `docker image history`.
 
 The question arises, can we build an image without Dockerfile
 knowing what we finally know about the build process? The answer is yes,
-however, I wouldn't recommend to use that in production. Let's do it anyway.
+however, I wouldn't recommend using that in production. Let's do it anyway.
 
-You can find [./build.sh](build.sh) in the project root which takes one
+You can find [./scripts/custom-build.sh](./scripts/custom-build.sh) from the project root which takes one
 optional argument, the image name.
 
 It contains a function called `build_layer` which takes the following arguments:
@@ -284,7 +284,7 @@ fi
 Run the script and set the image name to `localhost/buildtest:v4`
 
 ```bash
-./build.sh localhost/buildtest:v4
+./scripts/custom-build.sh localhost/buildtest:v4
 ```
 
 The output is something like this
@@ -356,10 +356,10 @@ I will just replace my old docker data folder with an empty one.
 > **DO NOT** touch this folder on a system where you have actually used Docker containers
 > unless you know exactly what you are doing.
 
-The following scripts are using [./env.sh](./env.sh) as a configuration file
+The following scripts are using [./env.default.sh](./env.default.sh) as a configuration file
 to set `PROJECT_DOCKER_DATA_DIR` (default value: `/var/lib/docker`) and
 `PROJECT_DOCKER_DATA_DIR_ARCHIVED_BASE` (default value: `"${PROJECT_DOCKER_DATA_DIR}.archived"`).
-You can change those settings by creating copying `./env.sh` as `./env.custom.sh`
+You can change those settings by copying `./env.default.sh` as `./env.custom.sh`
 and changing the values. The scripts are using `systemctl` to stop and start the Docker daemon. 
 If you have a different environment like "Windows Subsystem for Linux", it will not work, but
 you can check the scripts to get an idea how you can do it.
@@ -664,7 +664,8 @@ Now I can use the empty image to create a container and run the hello app
 in that container.
 
 ```bash
-docker run -it --rm -v $PWD/var/bin/hello:/hello localhost/buildtest:v5 /hello
+source env.sh
+docker run -it --rm -v $PWD/var/bin/hello:/hello $PROJECT_IMAGE_REPOSITORY:v5 /hello
 ```
 
 ```text
@@ -676,12 +677,12 @@ Dockerfile and the `docker run` command.
 
 The [meta.json](meta.json) will contain the metadata we saw earlier.
 The `lastUpdated` file will be created dynamically. Yes, we can do it! We are good!
-And finally, `build-from-scratch.sh` will do the build.
+And finally, `v6.sh` will do the build.
 
 Run the following command:
 
 ```bash
-sudo ./build-from-scratch.sh
+sudo ./v6.sh
 ```
 
 There is one downside of this solution. We have to restart the Docker daemon,
@@ -704,13 +705,13 @@ Now the magick is done, we have the new image:
 
 ```text
 REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
-localhost/buildtest   v7        7b46d4496bd9   27 hours ago     0B
+localhost/buildtest   v6        7b46d4496bd9   27 hours ago     0B
 ```
 
 ### With a minimal filesystem:
 
 ```bash
-./scripts/docker-build.sh v8
+./v7.sh
 ```
 
 TODO: 

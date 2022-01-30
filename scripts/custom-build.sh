@@ -2,6 +2,9 @@
 
 set -eu -o pipefail
 
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+source "$script_dir/../env.sh"
+
 function build_layer() {
   local image="$1"
   local instruction="$2"
@@ -60,7 +63,8 @@ function build_layer() {
   printf ' ---> %.12s\n' "$(echo "$image_id" | cut -d: -f2)"
 }
 
-target_image_name="${1:-}"
+target_image_tag="$1"
+target_image_name="$PROJECT_IMAGE_REPOSITORY:$target_image_tag"
 image_id=""
 step=0
 

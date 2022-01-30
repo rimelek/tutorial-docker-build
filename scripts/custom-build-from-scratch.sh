@@ -2,10 +2,18 @@
 
 set -eu -o pipefail
 
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+source "$script_dir/../env.sh"
+
+if [[ "$PROJECT_STORAGE_DRIVER" != "overlay2" ]]; then
+  >&2 echo "Invalid storage driver: $PROJECT_STORAGE_DRIVER"
+  >&2 echo "Supported storage drivers: overlay2"
+fi
+
 # Global settings
 
-docker_root_dir=/var/lib/docker
-storage_driver=overlay2
+docker_root_dir="$PROJECT_DOCKER_DATA_DIR"
+storage_driver="$PROJECT_STORAGE_DRIVER"
 imagedb_content_dst_dir="$docker_root_dir/image/$storage_driver/imagedb/content/sha256"
 imagedb_metadata_dst_dir="$docker_root_dir/image/$storage_driver/imagedb/metadata/sha256"
 repositories_path="$docker_root_dir/image/$storage_driver/repositories.json"
@@ -22,8 +30,8 @@ mkdir -p "$last_updated_dst_dir"
 date +%Y-%m-%dT%H:%M:%S.%N%:z | tr -d '\n' > "$last_updated_dst_dir/lastUpdated"
 
 # Add a tag to the layer
-repository="localhost/buildtest"
-tag="v7"
+repository="$PROJECT_IMAGE_REPOSITORY"
+tag="$1"
 
 jq -c \
    --arg repository "$repository" \
