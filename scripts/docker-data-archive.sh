@@ -3,8 +3,8 @@
 set -eu -o pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-source "$script_dir/env.sh"
-[[ -f "$script_dir/env.custom.sh" ]] && source "$script_dir/env.custom.sh"
+source "$script_dir/../env.sh"
+[[ -f "$script_dir/../env.custom.sh" ]] && source "$script_dir/../env.custom.sh"
 
 dir_current="$PROJECT_DOCKER_DATA_DIR"
 dir_archived_base="$PROJECT_DOCKER_DATA_DIR_ARCHIVED_BASE"

@@ -356,10 +356,10 @@ I will just replace my old docker data folder with an empty one.
 > **DO NOT** touch this folder on a system where you have actually used Docker containers
 > unless you know exactly what you are doing.
 
-The following scripts are using [./scripts/env.sh](./scripts/env.sh) as a configuration file
+The following scripts are using [./env.sh](./env.sh) as a configuration file
 to set `PROJECT_DOCKER_DATA_DIR` (default value: `/var/lib/docker`) and
 `PROJECT_DOCKER_DATA_DIR_ARCHIVED_BASE` (default value: `"${PROJECT_DOCKER_DATA_DIR}.archived"`).
-You can change those settings by creating copying `./scripts/env.sh` as `./scripts/env.custom.sh`
+You can change those settings by creating copying `./env.sh` as `./env.custom.sh`
 and changing the values. The scripts are using `systemctl` to stop and start the Docker daemon. 
 If you have a different environment like "Windows Subsystem for Linux", it will not work, but
 you can check the scripts to get an idea how you can do it.
