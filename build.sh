@@ -19,6 +19,9 @@ function build_layer() {
 
   case "$instruction" in
     FROM)
+      if [[ "$(docker image ls -q "${args[0]}" | wc -l)" == 0 ]]; then
+        docker image pull "${args[0]}"
+      fi
       image_id=$(docker image inspect "${args[0]}" --format '{{ .Id }}')
       ;;
     ARG)
