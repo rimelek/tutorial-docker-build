@@ -436,6 +436,28 @@ buildkit/cache.db
 buildkit/metadata_v2.db
 ```
 
+Since the files with the "db" extension are binaries, we can't just use `diff` command to see what changed.
+Run the following command to build `dockerdb-reader` written in GO
+
+```bash
+./scripts/go-build-dockerdb-reader.sh
+```
+
+List the changed files including the binary database files:
+
+```bash
+./scripts/docker-data-diff.sh 1
+```
+
+The output is something similar:
+
+```text
+Only in /var/lib/docker/image/overlay2/imagedb/content/sha256: 18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
+Only in /var/lib/docker/image/overlay2/imagedb/metadata/sha256: 18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00
+Files /var/lib/docker/image/overlay2/repositories.json and /var/lib/docker.archived.1/image/overlay2/repositories.json differ
+Files /var/lib/docker/network/files/local-kv.db and /var/lib/docker.archived.1/network/files/local-kv.db differ
+```
+
 Let's check the content of the `repositories.json` again.
 
 ```bash
