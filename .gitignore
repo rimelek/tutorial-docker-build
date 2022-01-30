@@ -3,3 +3,4 @@
 /var/bin/*
 !/var/bin/.gitkeep
 /.idea
+/env.custom.sh
