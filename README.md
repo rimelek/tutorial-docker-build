@@ -261,7 +261,8 @@ I will not write about each line, but I highlight the main part of the script
 to see how similar can the build be to `docker build`
 
 ```bash
-target_image_name="${1:-}"
+target_image_tag="$1"
+target_image_name="$PROJECT_IMAGE_REPOSITORY:$target_image_tag"
 image_id=""
 step=0
 
@@ -273,10 +274,10 @@ build_layer "$image_id" RUN /bin/sh -c 'export app_dir=/app && echo "version=$ve
 build_layer "$image_id" RUN /bin/sh -c 'apt-get update && apt-get install nano'
 build_layer "$image_id" CMD '["env"]'
 
-printf 'Successfully built %.12s\n' $(echo $image_id | cut -d: -f2)
+printf 'Successfully built %.12s\n' "$(echo "$image_id" | cut -d: -f2)"
 
 if [[ -n "$target_image_name" ]]; then
-  docker tag "$image_id" "$target_image_name"
+  docker image tag "$image_id" "$target_image_name"
   echo "Successfully tagged $target_image_name"
 fi
 ```
@@ -284,7 +285,7 @@ fi
 Run the script and set the image name to `localhost/buildtest:v4`
 
 ```bash
-./scripts/custom-build.sh localhost/buildtest:v4
+./scripts/custom-build.sh v4
 ```
 
 The output is something like this
