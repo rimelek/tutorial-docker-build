@@ -21,7 +21,7 @@ like setting variables.
 
 ### Understand a simple Dockerfile
 
-**Dockerfile.v1**
+**v1.Dockerfile**
 
 ```Dockerfile
 FROM ubuntu:20.04
@@ -58,7 +58,7 @@ It actually executes the following code:
 DOCKER_BUILDKIT=0 \
   docker image build . \
     -t localhost/buildtest:v1 \
-    -f Dockerfile.v1 \
+    -f v1.Dockerfile \
     --rm=false \
     --no-cache
 ```
@@ -80,7 +80,7 @@ It is what makes the output redirection possible.
 
 ### Use "RUN" instructions with the exec form
 
-The previous Dockerfile could be a little different: Let's call it **Dockerfile.v2**.
+The previous Dockerfile could be a little different: Let's call it **v2.Dockerfile**.
 
 ```Dockerfile
 FROM ubuntu:20.04
@@ -112,7 +112,7 @@ You can see the missing shell, right?
 ### Other instructions also create containers
 
 Now let's complicate things a little.
-The following Dockerfile called **Dockerfile.v3** uses more instructions:
+The following Dockerfile called **v3.Dockerfile** uses more instructions:
 
 ```Dockerfile
 FROM ubuntu:20.04
