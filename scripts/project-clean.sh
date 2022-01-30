@@ -2,4 +2,4 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
-find var/bin/ -type f -not -name .gitkeep -exec unlink {} \;
+find "$script_dir/../var/bin/" -type f -not -name .gitkeep -exec unlink {} \;
