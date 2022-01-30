@@ -708,7 +708,7 @@ REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
 localhost/buildtest   v6        7b46d4496bd9   27 hours ago     0B
 ```
 
-### With a minimal filesystem:
+### With a minimal filesystem
 
 ```bash
 ./v7.sh
