@@ -35,8 +35,12 @@ function db_files_rel() {
 }
 
 function db_files_pattern() {
+  local dir
+  # shellcheck disable=SC2001
+  dir="$(echo "$1" | sed 's#/*$##')/"
+  
   db_files_rel \
-    | sed "s#^#$1#" \
+    | sed "s#^#$dir#" \
     | sed 's/\./\\./g' \
     | tr $'\n' '|' \
     | sed 's/|/\\|/g'
