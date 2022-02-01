@@ -52,5 +52,5 @@ sudo diff --no-dereference -rq "$dir_1" "$dir_2" 2>/dev/stdout \
   || true
 
 # diff the actual content of the databases as json, not the binaries
-db_files_rel | xargs --replace='{}' -- "$script_dir/docker-db-diff.sh" -q "$dir_1/{}" "$dir_2/{}"  
+db_files_rel | xargs --replace='{}' -- sudo "$script_dir/docker-db-diff.sh" -q "$dir_1/{}" "$dir_2/{}"  
 

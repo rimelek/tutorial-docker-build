@@ -25,9 +25,9 @@ image_id="$(echo "$meta_json_compact" | sha256sum | cut -d " " -f 1)"
 last_updated_dst_dir="$imagedb_metadata_dst_dir/$image_id"
 
 # Image layer creation
-echo "$meta_json_compact" > "$imagedb_content_dst_dir/$image_id"
-mkdir -p "$last_updated_dst_dir"
-date +%Y-%m-%dT%H:%M:%S.%N%:z | tr -d '\n' > "$last_updated_dst_dir/lastUpdated"
+echo "$meta_json_compact" | sudo tee >/dev/null "$imagedb_content_dst_dir/$image_id"
+sudo mkdir -p "$last_updated_dst_dir"
+date +%Y-%m-%dT%H:%M:%S.%N%:z | tr -d '\n' | sudo tee >/dev/null "$last_updated_dst_dir/lastUpdated"
 
 # Add a tag to the layer
 repository="$PROJECT_IMAGE_REPOSITORY"
@@ -44,9 +44,9 @@ jq -c \
             }
           }
         }' \
-  < "$repositories_path" > "$repositories_path.tmp"
+  < <(sudo cat "$repositories_path") | sudo tee >/dev/null "$repositories_path.tmp"
 
-mv "$repositories_path.tmp" "$repositories_path"
+sudo mv "$repositories_path.tmp" "$repositories_path"
 
 echo "Docker image created from scratch: $repository:$tag"
 echo "Please, restart Docker manually to load the new image meta files."
