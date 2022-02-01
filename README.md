@@ -451,7 +451,15 @@ buildkit/metadata_v2.db
 ```
 
 Since the files with the "db" extension are binaries, we can't just use `diff` command to see what changed.
-Run the following command to build `dockerdb-reader` written in GO
+We will need "go" to build our first go app, the `dockerdb-reader`.
+
+Go can be installed multiple ways, but one way is using snap:
+
+```bash
+sudo snap install go --channel 1.17/stable --classic
+```
+
+Run the following command to build the app:
 
 ```bash
 ./scripts/go-build-dockerdb-reader.sh
@@ -714,11 +722,7 @@ The ID is generated from the json file which contains everything about the image
 Now you have the power to create your own image from scratch without a filesystem.
 This is not really useful, is it?
 
-Let's build our first go app which we can use in a container. I installed go as a snap package:
-
-```bash
-sudo snap install go --channel 1.17/stable --classic
-```
+Let's build our second go app which we can use in a container:
 
 Build `hello.go`
 
