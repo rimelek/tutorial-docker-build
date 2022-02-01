@@ -401,7 +401,7 @@ buildkit/metadata_v2.db
 We have database files and one json to store information about our image tags.
 
 ```bash
-./scripts/docker-data-repositories.sh
+./scripts/docker-data-repositories.sh | jq
 ```
 
 ```json
@@ -461,7 +461,7 @@ Files /var/lib/docker/network/files/local-kv.db and /var/lib/docker.archived.1/n
 Let's check the content of the `repositories.json` again.
 
 ```bash
-./scripts/docker-data-repositories.sh
+./scripts/docker-data-repositories.sh | jq
 ```
 
 ```json
