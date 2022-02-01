@@ -450,11 +450,12 @@ Run the following command to build `dockerdb-reader` written in GO
 ./scripts/go-build-dockerdb-reader.sh
 ```
 
-List the changed files including the binary database files. Use `2` as argument instead of `1` if you archived your
+List the changed files including the binary database files.
+Use `1` as argument instead of `2` if did not archive your
 original, non-empty directory.
 
 ```bash
-./scripts/docker-data-diff.sh 1
+./scripts/docker-data-diff.sh 2
 ```
 
 The output is something similar:
