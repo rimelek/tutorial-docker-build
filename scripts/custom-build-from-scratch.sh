@@ -50,4 +50,4 @@ sudo mv "$repositories_path.tmp" "$repositories_path"
 
 echo "Docker image created from scratch: $repository:$tag"
 echo "Please, restart Docker manually to load the new image meta files."
-echo "Example: systemctl restart docker"
+echo "Example: sudo systemctl restart docker"
