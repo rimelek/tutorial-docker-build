@@ -410,6 +410,13 @@ We have database files and one json to store information about our image tags.
 }
 ```
 
+The next command is not optional. We need to archive the docker data folder, so we can compare that and the modified
+folder after docker build.
+
+```bash
+./scripts/docker-data-archive.sh
+```
+
 It's time to build our first image from scratch. In this case, we don't want to keep the build containers,
 so we will use [./scripts/docker-build.sh](./scripts/docker-build.sh) which runs `docker build` without 
 `--no-cache` and `--rm=false`.
@@ -443,7 +450,8 @@ Run the following command to build `dockerdb-reader` written in GO
 ./scripts/go-build-dockerdb-reader.sh
 ```
 
-List the changed files including the binary database files:
+List the changed files including the binary database files. Use `2` as argument instead of `1` if you archived your
+original, non-empty directory.
 
 ```bash
 ./scripts/docker-data-diff.sh 1
