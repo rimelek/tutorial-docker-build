@@ -15,7 +15,7 @@ if [[ "$confirm" == "y" ]]; then
   sudo systemctl stop docker.service docker.socket
   echo "Destroying \"$dir\" ..."
   sudo rm -rf "$dir"
-  echo "Starting Docker daemon"
+  echo "Starting Docker daemon: sudo systemctl start docker.service docker.socket"
   sudo systemctl start docker.service docker.socket
   echo "Docker data destroyed"
 else
