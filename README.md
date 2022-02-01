@@ -466,6 +466,24 @@ Files /var/lib/docker/image/overlay2/repositories.json and /var/lib/docker.archi
 Files /var/lib/docker/network/files/local-kv.db and /var/lib/docker.archived.1/network/files/local-kv.db differ
 ```
 
+We can check the content of the database using the following command:
+
+```bash
+./scripts/docker-data-db-reader.sh network/files/local-kv.db | jq
+```
+
+The output is long so I leave here only a part of it as an example:
+
+```json
+{
+  "libnetwork": {
+    "docker/network/v1.0/bridge/a4ffccb66f2ac86cc6aee6c4e2319d6b64887adf6b832c09e94484fa5d2f4736/": "{\"AddressIPv4\":\"172.17.0.1/16\",\"BridgeIfaceCreator\":2,\"BridgeName\":\"docker0\",\"ContainerIfacePrefix\":\"\",\"DefaultBindingIP\":\"0.0.0.0\",\"DefaultBridge\":true,\"DefaultGatewayIPv4\":\"\\u003cnil\\u003e\",\"DefaultGatewayIPv6\":\"\\u003cnil\\u003e\",\"EnableICC\":true,\"EnableIPMasquerade\":true,\"EnableIPv6\":false,\"HostIP\":\"\\u003cnil\\u003e\",\"ID\":\"a4ffccb66f2ac86cc6aee6c4e2319d6b64887adf6b832c09e94484fa5d2f4736\",\"InhibitIPv4\":false,\"Internal\":false,\"Mtu\":1500}"
+  }
+}
+```
+As you can see, there is a hash in the first key of the network settings.
+This is what changes every time I reset the docker folder.
+
 Let's check the content of the `repositories.json` again.
 
 ```bash
@@ -489,10 +507,17 @@ If you need proof, run the following command:
 docker image ls --no-trunc --format '{{.ID}}'
 ```
 
+You can get the ID of `localhost/buildtest:v5` instead of listing every image:
+
+```bash
+docker image inspect localhost/buildtest:v5 --format '{{ .ID }}'
+```
+
 Using this ID you can get the metadata of this image by reading the file we have just discovered in `image/overlay2/imagedb/content/sha256/`:
 
 ```bash
-./scripts/docker-data-cat.sh "image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00" | jq .
+hash="$(docker image inspect localhost/buildtest:v5 --format '{{ .ID }}' | tr ':' '/')"
+./scripts/docker-data-cat.sh "image/overlay2/imagedb/content/$hash" | jq .
 ```
 
 ```json
@@ -656,7 +681,8 @@ docker image inspect localhost/buildtest:v5 --format '{{ json . }}' | jq .
 Compared to the previous outputs the file called "lastUpdated" is not so interesting.
 
 ```bash
-./scripts/docker-data-cat.sh -l "image/overlay2/imagedb/metadata/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00/lastUpdated"
+hash="$(docker image inspect localhost/buildtest:v5 --format '{{ .ID }}' | tr ':' '/')"
+./scripts/docker-data-cat.sh -l "image/overlay2/imagedb/metadata/$hash/lastUpdated"
 ```
 
 Note that I used `-l` flag to make sure the output ends with a line break, since the file does not contain it.
@@ -668,7 +694,8 @@ Note that I used `-l` flag to make sure the output ends with a line break, since
 If you are wondering where that long ID comes from, check this out:
 
 ```bash
-./scripts/docker-data-cat.sh "image/overlay2/imagedb/content/sha256/18391a6e324a1b804a02d7c07b303b68925ed6971bc955e64f4acd17f67d2b00" | sha256sum | cut -d " " -f1
+hash="$(docker image inspect localhost/buildtest:v5 --format '{{ .ID }}' | tr ':' '/')"
+./scripts/docker-data-cat.sh "image/overlay2/imagedb/content/$hash" | sha256sum | cut -d " " -f1
 ```
 
 ```text
@@ -695,8 +722,7 @@ Now I can use the empty image to create a container and run the hello app
 in that container.
 
 ```bash
-source env.sh
-docker run -it --rm -v $PWD/var/bin/hello:/hello $PROJECT_IMAGE_REPOSITORY:v5 /hello
+docker run -it --rm -v $PWD/var/bin/hello:/hello localhost/buildtest:v5 /hello
 ```
 
 ```text
@@ -716,7 +742,13 @@ Run the following command:
 sudo ./v6.sh
 ```
 
-There is one downside of this solution. We have to restart the Docker daemon,
+If you list the images now, you won't see the v6. 
+
+```bash
+docker image ls
+```
+
+We have to restart the Docker daemon,
 so it can reload the configuration. If you build a new image before you restart
 the docker daemon, Docker will overwrite the `repositories.json` without
 the tag which was added to the file by the script.
@@ -734,9 +766,19 @@ systemctl restart docker
 
 Now the magick is done, we have the new image:
 
+```bash
+docker image ls
+```
+
 ```text
 REPOSITORY            TAG       IMAGE ID       CREATED          SIZE
 localhost/buildtest   v6        7b46d4496bd9   27 hours ago     0B
+```
+
+Let's try the new image:
+
+```bash
+docker run -it --rm -v $PWD/var/bin/hello:/hello localhost/buildtest:v5 /hello
 ```
 
 ### With a minimal filesystem
