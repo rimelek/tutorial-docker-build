@@ -382,6 +382,13 @@ that it will really destroy all of your data if you don't have a backup.
 ./scripts/docker-data-destroy.sh
 ```
 
+IF you later want to restore the destroyed but previously archived folder, run
+
+```bash
+./scripts/docker-data-restore.sh 1
+# Change the argument to match your archived version
+```
+
 Let's see the files in this new folder after starting the Docker daemon.
 
 ```bash
