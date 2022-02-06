@@ -793,22 +793,6 @@ Let's try the new image:
 docker run -it --rm -v $PWD/var/bin/hello:/hello localhost/buildtest:v5 /hello
 ```
 
-### With a minimal filesystem
-
-```bash
-./v7.sh
-```
-
-TODO: 
-
-- Find the layer
-- Find the tar-split json
-- docker save v8
-- extract
-- sha256sum on layer.tar
-- Compare hash
-
-
 That's it for now. Make sure you understand how Docker build works
 so you will be able to optimize your build and use it the way nobody else could.
 
